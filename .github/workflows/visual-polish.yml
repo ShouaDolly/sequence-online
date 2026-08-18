@@ -17,6 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install fantasy background asset
+        shell: bash
+        run: |
+          mkdir -p public/assets
+          base64 -d public/assets/sequence-fantasy-background.webp.b64 > public/assets/sequence-fantasy-background.webp
+          rm public/assets/sequence-fantasy-background.webp.b64
+
       - name: Apply premium CSS
         shell: python
         run: |
@@ -72,12 +79,12 @@ body{min-height:100svh;}
               html = html.replace("</style>", css + "\n</style>", 1)
               path.write_text(html, encoding="utf-8")
 
-      - name: Commit premium CSS
+      - name: Commit premium CSS and background
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/index.html
+          git add public/index.html public/assets/sequence-fantasy-background.webp public/assets/sequence-fantasy-background.webp.b64
           git diff --cached --quiet && exit 0
           git commit -m "Apply premium fantasy UI polish"
           git push
