@@ -1,0 +1,67 @@
+name: Apply Emoji Picker UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/emoji-picker.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-picker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace emoji dropdown with square picker
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('public/index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = re.search(r'<label>Your emoji</label><select id="emoji">.*?</select>', s, re.S)
+          if not old:
+              raise SystemExit('Emoji selector not found; nothing to change.')
+
+          emojis = ['😎','🦊','🐼','🐱','🐯','🦄','🐸','🐰','🐻','🐙','🦋','🌸','🌙','⭐','🔥','👻','💎','🍀','⚡','🐲']
+          buttons = ''.join(f'<button type="button" class="emoji-opt" data-emoji="{e}">{e}</button>' for e in emojis)
+          new = '<label>Your emoji</label><input type="hidden" id="emoji" value="😎"><div class="emoji-picker" id="emojiPicker">' + buttons + '</div>'
+          s = s[:old.start()] + new + s[old.end():]
+
+          css = '''
+          .emoji-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 12px;padding:10px;border:1px solid #d8d0c0;border-radius:14px;background:linear-gradient(145deg,#f8f4eb,#eee7d9)}
+          .emoji-opt{aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:#fff;box-shadow:0 3px 8px #11244218;font-size:28px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;background-clip:padding-box}
+          .emoji-opt:hover{transform:translateY(-2px);box-shadow:0 7px 14px #11244225}
+          .emoji-opt.selected{border-color:#efc55d;box-shadow:0 0 0 3px #efc55d35,0 7px 14px #11244228;background:linear-gradient(#fffdf8,#fff8df)}
+          @media(max-width:759px){.emoji-picker{grid-template-columns:repeat(5,1fr);gap:7px;padding:8px}.emoji-opt{font-size:25px}}
+          '''
+          s = s.replace('</style>', css + '</style>', 1)
+
+          js = '''
+          document.querySelectorAll('.emoji-opt').forEach(btn=>btn.addEventListener('click',()=>{
+            document.getElementById('emoji').value=btn.dataset.emoji;
+            document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('selected'));
+            btn.classList.add('selected');
+          }));
+          document.querySelector('.emoji-opt')?.classList.add('selected');
+          '''
+          s = s.replace('<script>\nconst BOARD=', '<script>\n' + js + '\nconst BOARD=', 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit picker
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Replace emoji dropdown with square picker"
+          git push
