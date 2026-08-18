@@ -1,52 +1,49 @@
-# Sequence-Style Online — 6 Player
+# Sequence Online
 
-## What this is
-A real-time six-player card/board game using Cloudflare Workers + a SQLite-backed Durable Object + WebSocket Hibernation.
+A real-time, mobile-first, portrait multiplayer Sequence-style card/board game using Cloudflare Workers, Durable Objects, and WebSockets.
 
-Each player:
-- opens the same public URL
-- enters a name
-- enters the room code
-- gets a private hand
-- sees board moves in real time
+## Current game design
+- 2–12 players.
+- Players enter a name and join a room by link.
+- Spectator mode: people can join an active room without receiving a private hand or being able to play.
+- Host chooses one turn timer for everyone before the game starts: 10, 20, 30, 45, 60, 90, or 120 seconds.
+- Teams are randomized when the host starts the game.
+- Team token colors are blue, green, and red as applicable to player count.
+- Every team needs 2 sequences to win.
+- The board is portrait-oriented and uses a pale/white tabletop appearance.
+- Players select a card from their private hand, then select a legal matching board space.
+- A played card is discarded and a replacement is drawn automatically.
+- Two-eyed Jacks make wild token placements.
+- One-eyed Jacks remove an opponent token when that token is not protected by a completed sequence.
+- Corners are automatically wild.
 
-J♣/J♦ = wild placement.
-J♠/J♥ = remove an opponent chip unless protected by a completed sequence.
-Four corners = wild.
-For 3–6 players, the first sequence of five wins.
+## Timer / auto-finish
+The timer is **not** a punishment that simply skips a turn.
 
-Sounds are generated with the browser Web Audio API, so the project has no external audio files.
+When a player's timer expires, the server takes over that player's actual hand and automatically finishes the turn strategically:
+1. Prefer an immediate winning sequence.
+2. Look for a strong defensive/blocking removal with a one-eyed Jack.
+3. Use a two-eyed Jack offensively when useful.
+4. Choose a strong legal normal-card placement.
+5. Replace the played card from the draw pile and finish the turn.
+
+The host also has **Auto-Finish Turn**, which invokes the same server-side strategic logic immediately. This is useful when a player walks away or loses connection.
+
+## Host controls
+- Start game
+- Pause / resume game
+- Set the shared timer before starting
+- Auto-finish the current player's turn
+- Reset for a rematch
+
+## Room links
+The room share control copies the **entire URL**, not just the room code, so friends can tap the link and join directly.
 
 ## Deploy
 1. Create a free Cloudflare account.
 2. Install Node.js.
-3. In this folder run:
-   `npm install`
-4. Run locally:
-   `npm run dev`
-5. Deploy:
-   `npm run deploy`
+3. Run `npm install`.
+4. Run `npm run dev` locally.
+5. Run `npm run deploy` to deploy the Worker and its public assets.
 
-The Worker has a `public/` asset directory and one SQLite-backed Durable Object class called `GameRoom`.
-
-## Notes
-The free Workers plan currently includes Durable Objects. Current Cloudflare docs say the free plan provides 100,000 Durable Object requests/day and 13,000 GB-s/day of duration, while SQLite storage has a 5 GB account limit. WebSocket Hibernation is recommended for this multiplayer use case.
-
-
-## UX updates in this build
-- Six-player hands are 5 cards each.
-- Board uses a verified 10×10 Sequence-style mapping with no Jack spaces.
-- Selecting a card highlights every legal matching board square.
-- A Hint button can suggest a winning move, a block, or a strong central move.
-- Mobile hand cards scroll horizontally like a tabletop hand.
-- The board and hand remain visually connected so a player can select a card and immediately see where it can be played.
-
-
-Hints are calculated entirely in the individual player's browser. They are never sent through the WebSocket and are not visible to other players. The UI is mobile-first with a full-width board and swipeable hand.
-
-### 2–6 player rules
-- 2 players: 7 cards each, first to 2 sequences.
-- 3 players: 6 cards each, first to 2 sequences.
-- 4 players: 6 cards each, first to 1 sequence.
-- 5–6 players: 5 cards each, first to 1 sequence.
-- Turns advance clockwise around the room.
+The Worker uses a SQLite-backed Durable Object called `GameRoom` and WebSocket connections for live state synchronization.
