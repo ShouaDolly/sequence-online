@@ -2,7 +2,8 @@ name: Apply premium visual polish
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - '.github/workflows/visual-polish.yml'
 
@@ -13,17 +14,19 @@ jobs:
   polish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Apply responsive background and 3D controls
+      - name: Apply premium CSS
         shell: python
         run: |
           from pathlib import Path
-          p = Path('public/index.html')
-          s = p.read_text(encoding='utf-8')
-          css = r'''/* Premium fantasy tabletop background */
+
+          path = Path("public/index.html")
+          html = path.read_text(encoding="utf-8")
+
+          css = '''
+/* Premium fantasy tabletop background */
 html,body{background:#06142e url('/assets/sequence-fantasy-background.webp') center center / cover fixed no-repeat !important;}
 body{min-height:100svh;}
 .app{background:rgba(5,18,42,.34)!important;box-shadow:none!important;backdrop-filter:blur(.5px);}
@@ -38,19 +41,43 @@ body{min-height:100svh;}
 .finish.ready{animation:premiumPulse 1.25s ease-in-out infinite;}
 @keyframes premiumPulse{50%{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -4px 0 rgba(120,71,0,.2),0 0 0 5px rgba(239,197,93,.16),0 14px 28px rgba(129,84,12,.42)!important}}
 .undo,.hint{box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -3px 0 rgba(0,0,0,.24),0 8px 18px rgba(0,0,0,.3)!important;}
-@media(min-width:760px){html,body{overflow:hidden!important;}.app{width:min(100vw,1500px);min-height:100dvh;}.page{height:calc(100dvh - 64px);padding:8px 12px;overflow:hidden;}.game{height:100%;min-height:0;display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;gap:6px;overflow:hidden;padding-left:188px!important;}.player-strip{top:38px!important;left:0!important;width:174px!important;max-height:calc(100dvh - 240px)!important;overflow:auto!important;}.board-wrap{min-height:0!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;}.board{width:min(calc(100% - 10px),calc(100dvh - 315px))!important;height:min(calc(100% - 10px),calc(100dvh - 315px))!important;aspect-ratio:1/1!important;}.hand{height:158px!important;min-height:158px!important;position:relative!important;bottom:auto!important;overflow:visible!important;display:flex!important;flex-direction:column!important;}.hand-head{flex:0 0 20px!important;min-height:20px!important;}.cards{height:94px!important;min-height:94px!important;overflow:visible!important;align-items:flex-end!important;}.cardhand{flex-basis:68px!important;width:68px!important;height:94px!important;margin:0 -11px!important;}.cardhand .suit{font-size:22px!important;margin-top:4px!important;}.cardhand .jack img{height:45px!important;}.actionbar{height:40px!important;min-height:40px!important;display:grid!important;grid-template-columns:1fr 1.6fr 1fr!important;gap:8px!important;}.actionbar button{height:40px!important;display:block!important;visibility:visible!important;opacity:1!important;z-index:50!important;}}
-@media(max-width:759px){html,body{overflow-x:hidden;}.app{background:rgba(5,18,42,.2)!important;}.page{padding-bottom:8px!important;}.board-wrap{box-shadow:0 16px 34px rgba(0,8,28,.44)!important;}.hand{box-shadow:0 -12px 34px rgba(0,7,30,.52)!important;}}
+@media(min-width:760px){
+  html,body{overflow:hidden!important;}
+  .app{width:min(100vw,1500px);min-height:100dvh;}
+  .page{height:calc(100dvh - 64px);padding:8px 12px;overflow:hidden;}
+  .game{height:100%;min-height:0;display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;gap:6px;overflow:hidden;padding-left:188px!important;}
+  .player-strip{top:38px!important;left:0!important;width:174px!important;max-height:calc(100dvh - 240px)!important;overflow:auto!important;}
+  .board-wrap{min-height:0!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;}
+  .board{width:min(calc(100% - 10px),calc(100dvh - 315px))!important;height:min(calc(100% - 10px),calc(100dvh - 315px))!important;aspect-ratio:1/1!important;}
+  .hand{height:158px!important;min-height:158px!important;position:relative!important;bottom:auto!important;overflow:visible!important;display:flex!important;flex-direction:column!important;}
+  .hand-head{flex:0 0 20px!important;min-height:20px!important;}
+  .cards{height:94px!important;min-height:94px!important;overflow:visible!important;align-items:flex-end!important;}
+  .cardhand{flex-basis:68px!important;width:68px!important;height:94px!important;margin:0 -11px!important;}
+  .cardhand .suit{font-size:22px!important;margin-top:4px!important;}
+  .cardhand .jack img{height:45px!important;}
+  .actionbar{height:40px!important;min-height:40px!important;display:grid!important;grid-template-columns:1fr 1.6fr 1fr!important;gap:8px!important;}
+  .actionbar button{height:40px!important;display:block!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
+}
+@media(max-width:759px){
+  html,body{overflow-x:hidden;}
+  .app{background:rgba(5,18,42,.2)!important;}
+  .page{padding-bottom:8px!important;}
+  .board-wrap{box-shadow:0 16px 34px rgba(0,8,28,.44)!important;}
+  .hand{box-shadow:0 -12px 34px rgba(0,7,30,.52)!important;}
+}
 '''
-          marker='/* Premium fantasy tabletop background */'
-          if marker not in s:s=s.replace('</style>',css+'\n</style>',1)
-          p.write_text(s,encoding='utf-8')
 
-      - name: Commit premium visual polish
+          marker = "/* Premium fantasy tabletop background */"
+          if marker not in html:
+              html = html.replace("</style>", css + "\n</style>", 1)
+              path.write_text(html, encoding="utf-8")
+
+      - name: Commit premium CSS
         shell: bash
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Apply fantasy background and 3D game controls"
+          git commit -m "Apply premium fantasy UI polish"
           git push
