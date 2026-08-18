@@ -1,4 +1,4 @@
-name: Apply Emoji Picker UI
+name: Apply Sequence+ UI fixes
 
 on:
   push:
@@ -10,58 +10,74 @@ permissions:
   contents: write
 
 jobs:
-  apply-picker:
+  apply-fixes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Replace emoji dropdown with square picker
+      - name: Fix desktop hand and action controls
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           p = Path('public/index.html')
           s = p.read_text(encoding='utf-8')
 
-          old = re.search(r'<label>Your emoji</label><select id="emoji">.*?</select>', s, re.S)
-          if not old:
-              raise SystemExit('Emoji selector not found; nothing to change.')
-
-          emojis = ['😎','🦊','🐼','🐱','🐯','🦄','🐸','🐰','🐻','🐙','🦋','🌸','🌙','⭐','🔥','👻','💎','🍀','⚡','🐲']
-          buttons = ''.join(f'<button type="button" class="emoji-opt" data-emoji="{e}">{e}</button>' for e in emojis)
-          new = '<label>Your emoji</label><input type="hidden" id="emoji" value="😎"><div class="emoji-picker" id="emojiPicker">' + buttons + '</div>'
-          s = s[:old.start()] + new + s[old.end():]
-
           css = '''
-          .emoji-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 12px;padding:10px;border:1px solid #d8d0c0;border-radius:14px;background:linear-gradient(145deg,#f8f4eb,#eee7d9)}
-          .emoji-opt{aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:#fff;box-shadow:0 3px 8px #11244218;font-size:28px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;background-clip:padding-box}
-          .emoji-opt:hover{transform:translateY(-2px);box-shadow:0 7px 14px #11244225}
-          .emoji-opt.selected{border-color:#efc55d;box-shadow:0 0 0 3px #efc55d35,0 7px 14px #11244228;background:linear-gradient(#fffdf8,#fff8df)}
-          @media(max-width:759px){.emoji-picker{grid-template-columns:repeat(5,1fr);gap:7px;padding:8px}.emoji-opt{font-size:25px}}
+          /* Desktop game-table fix: keep the action buttons visible. */
+          @media(min-width:760px){
+            .game{grid-template-rows:29px 50px 28px minmax(0,1fr) 150px !important;}
+            .game .hand{
+              height:150px !important;
+              min-height:150px !important;
+              overflow:visible !important;
+              display:flex !important;
+              flex-direction:column !important;
+            }
+            .game .hand-head{flex:0 0 18px !important;}
+            .game .cards{
+              flex:1 1 auto !important;
+              min-height:72px !important;
+              height:76px !important;
+              overflow:visible !important;
+            }
+            .game .actionbar{
+              display:grid !important;
+              grid-template-columns:1fr 1.6fr 1fr !important;
+              flex:0 0 38px !important;
+              height:38px !important;
+              min-height:38px !important;
+              visibility:visible !important;
+              position:relative !important;
+              z-index:50 !important;
+            }
+            .game .actionbar button{
+              display:block !important;
+              visibility:visible !important;
+              opacity:1 !important;
+              position:relative !important;
+              z-index:51 !important;
+            }
+            .game .board{
+              width:min(100%,calc(100dvh - 272px)) !important;
+            }
+          }
           '''
-          s = s.replace('</style>', css + '</style>', 1)
 
-          js = '''
-          document.querySelectorAll('.emoji-opt').forEach(btn=>btn.addEventListener('click',()=>{
-            document.getElementById('emoji').value=btn.dataset.emoji;
-            document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('selected'));
-            btn.classList.add('selected');
-          }));
-          document.querySelector('.emoji-opt')?.classList.add('selected');
-          '''
-          s = s.replace('<script>\nconst BOARD=', '<script>\n' + js + '\nconst BOARD=', 1)
+          marker = '/* Desktop game-table fix: keep the action buttons visible. */'
+          if marker not in s:
+              s = s.replace('</style>', css + '\n</style>', 1)
 
           p.write_text(s, encoding='utf-8')
 
-      - name: Commit picker
+      - name: Commit desktop fix
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add public/index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Replace emoji dropdown with square picker"
+          git commit -m "Fix desktop Finish Turn visibility"
           git push
