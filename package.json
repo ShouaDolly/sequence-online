@@ -1,12 +1,1 @@
-{
-  "name": "sequence-online",
-  "private": true,
-  "version": "0.1.0",
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
-  },
-  "devDependencies": {
-    "wrangler": "latest"
-  }
-}
+{"name":"sequence-online","private":true,"version":"0.3.0","scripts":{"dev":"wrangler dev","deploy":"wrangler deploy"},"devDependencies":{"wrangler":"latest"}}
