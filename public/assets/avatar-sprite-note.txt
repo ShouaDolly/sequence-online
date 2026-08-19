@@ -1,0 +1,1 @@
+The exact 20 custom avatars are being wired from the user-supplied sheet.
