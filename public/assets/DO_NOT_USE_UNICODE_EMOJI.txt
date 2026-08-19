@@ -1,0 +1,1 @@
+Canonical avatar source is the exact 20-character custom avatar sheet supplied by the user.
