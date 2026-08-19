@@ -1,0 +1,1 @@
+window.SEQUENCE_AVATARS={"fox-royal":"data:image/webp;base64,UklGR..."};
