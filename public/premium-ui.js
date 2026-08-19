@@ -23,6 +23,36 @@
   };
   const avatarSvg=(id)=>`<svg class="avatar-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="/assets/sequence-avatars.svg#${id}"></use></svg>`;
   const getAvatar=value=>avatars[value]||avatars['😎'];
+
+  // The original screen switching relies on .hidden. Explicitly synchronize
+  // the three full-page screens as well so a browser compositor cannot leave
+  // a stale layer from the previous screen visible underneath the new one.
+  function syncScreens(){
+    const screens=[document.getElementById('lobby'),document.getElementById('roomView'),document.getElementById('game')].filter(Boolean);
+    for(const el of screens){
+      const hidden=el.classList.contains('hidden');
+      if(hidden){
+        el.style.setProperty('display','none','important');
+        el.style.setProperty('visibility','hidden','important');
+        el.style.setProperty('opacity','0','important');
+        el.style.setProperty('pointer-events','none','important');
+        el.style.setProperty('transform','translateZ(0)','important');
+      }else{
+        el.style.removeProperty('display');
+        el.style.removeProperty('visibility');
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('pointer-events');
+        el.style.setProperty('transform','translateZ(0)','important');
+      }
+    }
+    // Force a clean paint of the page after a screen transition.
+    const page=document.querySelector('.page');
+    if(page){
+      page.style.setProperty('transform','translateZ(0)','important');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>page.style.removeProperty('transform')));
+    }
+  }
+
   function decoratePicker(){
     document.querySelectorAll('.emoji-opt').forEach(btn=>{
       if(btn.dataset.avatarEnhanced==='1') return;
@@ -65,6 +95,7 @@
     scheduled=true;
     requestAnimationFrame(()=>{
       scheduled=false;
+      syncScreens();
       decoratePicker();
       decoratePreview();
       decorateRoster();
@@ -73,9 +104,11 @@
   function boot(){
     decorate();
     const observer=new MutationObserver(()=>decorate());
-    observer.observe(document.body,{childList:true,subtree:true});
+    observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
     const hidden=document.getElementById('emoji');
     if(hidden) hidden.addEventListener('input',decorate);
+    window.addEventListener('pageshow',decorate);
+    window.addEventListener('resize',decorate);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
