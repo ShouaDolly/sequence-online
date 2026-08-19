@@ -24,9 +24,8 @@
   const avatarSvg=(id)=>`<svg class="avatar-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="/assets/sequence-avatars.svg#${id}"></use></svg>`;
   const getAvatar=value=>avatars[value]||avatars['😎'];
 
-  // The original screen switching relies on .hidden. Explicitly synchronize
-  // the three full-page screens as well so a browser compositor cannot leave
-  // a stale layer from the previous screen visible underneath the new one.
+  // Explicitly synchronize the three full-page screens. This prevents a
+  // browser compositor from retaining a painted layer from the previous screen.
   function syncScreens(){
     const screens=[document.getElementById('lobby'),document.getElementById('roomView'),document.getElementById('game')].filter(Boolean);
     for(const el of screens){
@@ -36,16 +35,13 @@
         el.style.setProperty('visibility','hidden','important');
         el.style.setProperty('opacity','0','important');
         el.style.setProperty('pointer-events','none','important');
-        el.style.setProperty('transform','translateZ(0)','important');
       }else{
         el.style.removeProperty('display');
         el.style.removeProperty('visibility');
         el.style.removeProperty('opacity');
         el.style.removeProperty('pointer-events');
-        el.style.setProperty('transform','translateZ(0)','important');
       }
     }
-    // Force a clean paint of the page after a screen transition.
     const page=document.querySelector('.page');
     if(page){
       page.style.setProperty('transform','translateZ(0)','important');
@@ -104,7 +100,7 @@
   function boot(){
     decorate();
     const observer=new MutationObserver(()=>decorate());
-    observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
+    observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
     const hidden=document.getElementById('emoji');
     if(hidden) hidden.addEventListener('input',decorate);
     window.addEventListener('pageshow',decorate);
