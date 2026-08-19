@@ -1,0 +1,1 @@
+Use the exact 20-character custom avatar sheet supplied by the user for the picker. Do not substitute generic emoji.
