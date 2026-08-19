@@ -4,8 +4,20 @@ html,body{background:#06142e url('/assets/sequence-fantasy-background.svg') cent
 @media(min-width:760px){html,body{overflow:hidden!important;height:100%;}.app{width:min(100vw,1500px);height:100dvh;min-height:100dvh}.page{height:calc(100dvh - 64px);padding:7px 10px;overflow:hidden}.game{height:100%;min-height:0;display:grid!important;grid-template-rows:30px 46px 34px minmax(0,1fr) 132px!important;gap:5px;overflow:hidden;padding-left:188px!important}.player-strip{top:38px!important;left:0!important;width:174px!important;max-height:calc(100dvh - 160px)!important;overflow:auto!important}.board-wrap{min-height:0!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}.board{width:min(calc(100% - 10px),calc(100dvh - 328px))!important;height:auto!important;max-height:100%!important;aspect-ratio:1!important}.hand{height:132px!important;min-height:132px!important;margin-top:0!important;position:relative!important;bottom:auto!important;overflow:visible!important;display:flex!important;flex-direction:column!important}.hand-head{flex:0 0 18px!important;min-height:18px!important}.cards{height:78px!important;min-height:78px!important;overflow:visible!important;padding-top:2px!important}.cardhand{flex-basis:64px!important;width:64px!important;height:84px!important;margin:0 -10px!important;padding:6px!important}.cardhand .rank{font-size:14px!important}.cardhand .suit{font-size:22px!important;margin-top:4px!important}.cardhand .jack img{height:42px!important}.actionbar{height:32px!important;min-height:32px!important;gap:7px!important}.actionbar button{height:32px!important;padding:6px 9px!important;border-radius:14px!important;font-size:12px!important}.fan-note{display:none!important}.crown{margin:0!important}.turnrow{min-height:0!important}.stats{min-height:0!important;height:34px!important;overflow:hidden!important}.stat{padding:4px 6px!important}.stat b{font-size:12px!important}}
 @media(max-width:759px){html,body{overflow-x:hidden}.app{background:rgba(5,18,42,.94)!important}.board-wrap{box-shadow:0 16px 34px rgba(0,8,28,.44)!important}.hand{box-shadow:0 -12px 34px rgba(0,7,30,.52)!important}}
 
-/* Screen-transition rendering fix: remove extra paint/compositing layers. */
-#lobby,#roomView,#game{isolation:auto!important;contain:none!important;backface-visibility:visible!important;-webkit-backface-visibility:visible!important;transform:none;transition:none!important;animation:none!important}
+#lobby,#roomView,#game{isolation:auto!important;contain:none!important;backface-visibility:visible!important;-webkit-backface-visibility:visible!important;transform:none!important;transition:none!important;animation:none!important}
 .app>*{backface-visibility:visible!important;-webkit-backface-visibility:visible!important}
 .page{contain:none!important;backface-visibility:visible!important;-webkit-backface-visibility:visible!important}
 .hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* Custom avatar artwork */
+.avatar-art{display:inline-block;width:100%;height:100%;min-width:0;min-height:0;border-radius:50%;overflow:hidden;pointer-events:none}
+.avatar-art svg{display:block;width:100%;height:100%}
+.emoji-trigger .preview{padding:2px!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+.emoji-trigger .preview .avatar-art{width:100%;height:100%}
+.emoji-opt{padding:4px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.emoji-opt .picker-avatar{width:100%;height:100%;border-radius:50%}
+.player-avatar-emoji{display:inline-flex!important;width:28px!important;height:28px!important;margin-right:5px!important;vertical-align:middle!important;overflow:hidden!important;border-radius:50%!important;flex:none!important}
+.player-avatar-emoji .mini-avatar{width:28px!important;height:28px!important}
+.player-chip .player-avatar-emoji{width:26px!important;height:26px!important}
+.player-chip .player-avatar-emoji .mini-avatar{width:26px!important;height:26px!important}
+body{overflow-x:hidden!important}
