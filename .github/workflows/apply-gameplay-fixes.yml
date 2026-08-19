@@ -1,0 +1,167 @@
+name: Apply gameplay fixes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-gameplay-fixes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply gameplay fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          worker = Path('src/worker.js')
+          s = worker.read_text()
+          old = 'if(data.type==="end_turn"){if(pid!==state.hostId||state.status!=="playing"||state.paused)return this.finishOrAutoFinish(state,"host")}'
+          new = 'if(data.type==="end_turn"){if(pid!==state.hostId||state.status!=="playing"||state.paused)return;return this.finishOrAutoFinish(state,"host")}'
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif new not in s:
+              raise SystemExit('Could not find Auto-Finish handler in src/worker.js')
+          worker.write_text(s)
+
+          css = Path('public/premium-ui.css')
+          c = css.read_text()
+          addition = r'''
+          /* Final desktop viewport fit */
+          @media(min-width:760px){
+            html,body{height:100dvh!important;max-height:100dvh!important;overflow:hidden!important}
+            .app{height:100dvh!important;max-height:100dvh!important}
+            .page{height:calc(100dvh - 64px)!important;max-height:calc(100dvh - 64px)!important;overflow:hidden!important;padding:5px 8px!important}
+            .game{height:100%!important;max-height:100%!important;grid-template-rows:26px 45px 26px minmax(0,1fr) 118px!important;row-gap:3px!important}
+            .game .turnrow{height:45px!important}
+            .game .stats{height:26px!important}
+            .game .board-wrap{min-height:0!important;height:100%!important;overflow:hidden!important;padding:4px!important}
+            .game .board{width:min(100%,calc(100dvh - 330px))!important;height:auto!important;max-width:100%!important;max-height:100%!important;aspect-ratio:1/1!important}
+            .game .hand{height:118px!important;max-height:118px!important;overflow:visible!important}
+            .game .cards{height:72px!important;min-height:72px!important}
+          }
+
+          /* Completed sequences are permanently protected. */
+          .token.sequence-locked{background:radial-gradient(circle at 35% 28%,#fff6b0 0,#f0c84d 22%,#b77b16 62%,#6d410b 100%)!important;border:3px solid #fff2a8!important;box-shadow:0 0 0 2px #7a4d10,0 0 14px #f5d35d,0 4px 10px #0008!important;color:#fff!important;animation:sequenceLockPulse .9s ease-out}
+          .token.sequence-locked::after{content:"🔒";font-size:clamp(8px,1.4vw,12px);filter:drop-shadow(0 1px 1px #5a3700);}
+          @keyframes sequenceLockPulse{0%{transform:scale(.72) rotate(-8deg);filter:brightness(1.5)}65%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+          .sequence-locked-cell{box-shadow:inset 0 0 0 2px #e5b83f,0 0 10px #e5b83f55!important}
+          .sequence-locked-cell .face{opacity:.62}
+          '''
+          if 'Final desktop viewport fit' not in c:
+              c += '\n' + addition
+              css.write_text(c)
+
+          patch = Path('public/game-enhancements.js')
+          patch.write_text(r'''(() => {
+            'use strict';
+            const COLORS = ['blue','green','red'];
+            let audioCtx = null;
+            let muted = localStorage.getItem('sequence_sound_muted') === '1';
+
+            function ctx(){
+              if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              if(audioCtx.state === 'suspended') audioCtx.resume();
+              return audioCtx;
+            }
+            function tone(freq, duration=.09, type='sine', volume=.035, when=0){
+              if(muted) return;
+              try{
+                const ac=ctx(), now=ac.currentTime+when, o=ac.createOscillator(), g=ac.createGain();
+                o.type=type; o.frequency.setValueAtTime(freq,now);
+                g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(volume,now+.008); g.gain.exponentialRampToValueAtTime(0.0001,now+duration);
+                o.connect(g).connect(ac.destination); o.start(now); o.stop(now+duration+.02);
+              }catch{}
+            }
+            function silly(name){
+              if(name==='card'){tone(360,.06,'triangle',.028);tone(520,.07,'triangle',.022,.035)}
+              else if(name==='place'){tone(210,.06,'square',.025);tone(330,.10,'triangle',.028,.045)}
+              else if(name==='remove'){tone(620,.06,'sawtooth',.022);tone(260,.13,'triangle',.03,.055)}
+              else if(name==='finish'){tone(440,.08,'triangle',.03);tone(660,.08,'triangle',.03,.08);tone(880,.16,'triangle',.04,.16)}
+              else if(name==='auto'){tone(180,.12,'sawtooth',.028);tone(120,.15,'square',.02,.10);tone(240,.12,'triangle',.025,.23)}
+              else if(name==='hint'){tone(880,.06,'sine',.025);tone(1180,.09,'sine',.025,.07)}
+              else if(name==='lock'){tone(520,.08,'triangle',.028);tone(780,.08,'triangle',.03,.07);tone(1040,.16,'sine',.035,.14)}
+            }
+
+            const soundButton=document.createElement('button');
+            soundButton.type='button'; soundButton.id='soundToggle'; soundButton.textContent=muted?'🔇':'🔊'; soundButton.title='Toggle game sounds';
+            soundButton.style.cssText='position:fixed;right:12px;bottom:12px;z-index:4000;width:40px;height:40px;border-radius:50%;border:1px solid #52749b;background:#0b2445;color:#fff;box-shadow:0 6px 18px #0006;cursor:pointer;font-size:18px;';
+            soundButton.onclick=()=>{muted=!muted;localStorage.setItem('sequence_sound_muted',muted?'1':'0');soundButton.textContent=muted?'🔇':'🔊';if(!muted)silly('hint')};
+            document.body.appendChild(soundButton);
+
+            function boardCells(){return [...document.querySelectorAll('#board .cell')];}
+            function idx(r,c){return r*10+c}
+            function hasToken(cells,r,c,color){const cell=cells[idx(r,c)];return !!cell?.querySelector('.token.'+color)}
+            function isCorner(r,c){return (r===0||r===9)&&(c===0||c===9)}
+            function occ(cells,r,c,color){return r>=0&&r<10&&c>=0&&c<10&&(isCorner(r,c)||hasToken(cells,r,c,color))}
+            function sequencesFor(cells,color){
+              const dirs=[[1,0],[0,1],[1,1],[1,-1]],out=[];
+              for(let r=0;r<10;r++)for(let c=0;c<10;c++)for(const [dr,dc] of dirs){
+                const pr=r-dr,pc=c-dc;if(occ(cells,pr,pc,color)||!occ(cells,r,c,color))continue;
+                const run=[];let rr=r,cc=c;while(occ(cells,rr,cc,color)){run.push([rr,cc]);rr+=dr;cc+=dc}
+                for(let k=0;k<Math.floor((run.length-1)/4);k++)out.push(run.slice(k*4,k*4+5));
+              }
+              return out;
+            }
+            function markLockedSequences(playSound=false){
+              const cells=boardCells(); if(cells.length!==100)return;
+              const locked=new Set();
+              COLORS.forEach(color=>sequencesFor(cells,color).forEach(seq=>seq.forEach(([r,c])=>locked.add(idx(r,c)))));
+              let newly=false;
+              cells.forEach((cell,i)=>{
+                const token=cell.querySelector('.token');
+                const should=locked.has(i);
+                if(token && should && !token.classList.contains('sequence-locked')) newly=true;
+                token?.classList.toggle('sequence-locked',should);
+                cell.classList.toggle('sequence-locked-cell',should);
+              });
+              if(playSound && newly)silly('lock');
+              return newly;
+            }
+            const boardObserver=new MutationObserver(()=>{ if(document.querySelector('#game:not(.hidden)')) markLockedSequences(true); });
+            const start=()=>{
+              const b=document.querySelector('#board');
+              if(b){boardObserver.observe(b,{childList:true,subtree:true});markLockedSequences(false)}
+            };
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+
+            document.addEventListener('click',e=>{
+              const t=e.target.closest?.('#cards .cardhand'); if(t)silly('card');
+              if(e.target.closest?.('#hintBtn'))silly('hint');
+              if(e.target.closest?.('#finishBtn'))silly('finish');
+              if(e.target.closest?.('#autoBtn'))silly('auto');
+              if(e.target.closest?.('#board .cell'))setTimeout(()=>markLockedSequences(false),40);
+            },true);
+          })();
+          ''')
+
+          html = Path('public/index.html')
+          h = html.read_text()
+          marker = '<script src="/premium-ui.js" defer></script>'
+          replacement = marker + '<script src="/game-enhancements.js" defer></script>'
+          if '/game-enhancements.js' not in h:
+              if marker not in h:
+                  raise SystemExit('Could not find premium-ui script tag in public/index.html')
+              h = h.replace(marker, replacement, 1)
+              html.write_text(h)
+          PY
+
+      - name: Commit fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/worker.js public/index.html public/premium-ui.css public/game-enhancements.js
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "Fix auto-finish, desktop board fit, sounds, and sequence locks"
+            git push
+          fi
