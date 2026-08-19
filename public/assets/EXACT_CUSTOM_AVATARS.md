@@ -1,0 +1,1 @@
+Source: user-supplied 20-character custom avatar sheet. The UI must use those exact characters, not generic Unicode emoji or substitute artwork.
