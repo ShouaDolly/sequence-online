@@ -1,34 +1,59 @@
 (()=> {
-  if (window.__sequencePremiumUIv3Loaded) return;
-  window.__sequencePremiumUIv3Loaded = true;
+  if (window.__sequencePremiumUIv4Loaded) return;
+  window.__sequencePremiumUIv4Loaded = true;
 
-  // Custom avatar lineup. The hidden value remains the existing emoji identifier
-  // for multiplayer compatibility; the UI renders the custom avatar artwork.
+  // The stored value remains the original emoji identifier for multiplayer
+  // compatibility. The visible avatar is now rendered from /media/emojis/.
   const AVATARS = [
-    ["😎",18,"turtle"],["🦊",1,"fox"],["🐼",2,"panda"],["🐱",0,"cat"],["🐯",4,"tiger"],
-    ["🦄",5,"unicorn"],["🐸",6,"frog"],["🐰",3,"rabbit"],["🐻",7,"bear"],["🐙",8,"octopus"],
-    ["🦋",9,"butterfly"],["🌸",10,"blossom"],["🌙",11,"moon"],["⭐",12,"star"],["🔥",13,"fire"],
-    ["👻",14,"ghost"],["💎",15,"diamond"],["🍀",16,"clover"],["⚡",17,"wolf"],["🐲",19,"dragon"]
+    ["😎",18,"turtle","turtle.png"],
+    ["🦊",1,"9-tail fox","9-tail-fox.png"],
+    ["🐼",2,"panda","panda.png"],
+    ["🐱",0,"royal cat","cat-royal.png"],
+    ["🐯",4,"tiger","tiger.png"],
+    ["🦄",5,"unicorn","unicorn.png"],
+    ["🐸",6,"frog","frog.png"],
+    ["🐰",3,"rabbit","rabbit.png"],
+    ["🐻",7,"bear",""],
+    ["🐙",8,"octopus","octopus.png"],
+    ["🦋",9,"butterfly","butterfly.png"],
+    ["🌸",10,"blossom girl","blossom-girl.png"],
+    ["🌙",11,"moon","moon.png"],
+    ["⭐",12,"star","star.png"],
+    ["🔥",13,"fire",""],
+    ["👻",14,"ghost","ghost.png"],
+    ["💎",15,"diamond",""],
+    ["🍀",16,"clover","clover.png"],
+    ["⚡",17,"wolf","wolf.png"],
+    ["🐲",19,"dragon",""]
   ];
-  const AVATAR_MAP = Object.fromEntries(AVATARS.map(([emoji,index,slug]) => [emoji,{index,slug}]));
+
+  const AVATAR_MAP = Object.fromEntries(
+    AVATARS.map(([emoji,index,slug,file]) => [emoji,{index,slug,file}])
+  );
   window.SEQUENCE_AVATAR_MAP = AVATAR_MAP;
 
+  const EMOJI_ASSET_BASE = "/media/emojis/";
+  const MASCOT_SRC = `${EMOJI_ASSET_BASE}9-tail-fox.png`;
+
   function avatarArt(emoji, extraClass="") {
-    const meta = AVATAR_MAP[emoji] || AVATAR_MAP["🐱"];
+    const meta = AVATAR_MAP[emoji] || AVATAR_MAP["😎"];
     const el = document.createElement("span");
     el.className = `avatar-art ${extraClass}`.trim();
     el.dataset.emoji = emoji;
     el.dataset.avatarIndex = String(meta.index);
     el.title = meta.slug;
-    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("viewBox","0 0 100 100");
-    svg.setAttribute("aria-hidden","true");
-    const use = document.createElementNS("http://www.w3.org/2000/svg","use");
-    const href = `/assets/sequence-avatars.svg#a${String(meta.index+1).padStart(2,"0")}`;
-    use.setAttribute("href", href);
-    use.setAttributeNS("http://www.w3.org/1999/xlink","href", href);
-    svg.appendChild(use);
-    el.appendChild(svg);
+
+    if (meta.file) {
+      const img = document.createElement("img");
+      img.src = `${EMOJI_ASSET_BASE}${meta.file}`;
+      img.alt = meta.slug;
+      img.loading = "lazy";
+      img.draggable = false;
+      el.appendChild(img);
+    } else {
+      el.textContent = emoji;
+      el.classList.add("avatar-fallback");
+    }
     return el;
   }
 
@@ -47,11 +72,13 @@
   function rebuildPicker() {
     const picker = document.getElementById("emojiPicker");
     if (!picker) return;
-    if (picker.dataset.avatarV3 === "1") {
+
+    if (picker.dataset.avatarV4 === "1") {
       patchPreview();
       return;
     }
-    picker.dataset.avatarV3 = "1";
+
+    picker.dataset.avatarV4 = "1";
     picker.innerHTML = "";
 
     for (const [emoji,index,slug] of AVATARS) {
@@ -59,23 +86,34 @@
       b.type = "button";
       b.className = "emoji-opt";
       b.dataset.emoji = emoji;
-      b.title = slug.replace(/-/g," ");
+      b.title = slug;
+      b.setAttribute("aria-label", slug);
       b.appendChild(avatarArt(emoji, "picker-avatar"));
+
       b.addEventListener("click", () => {
         const input = document.getElementById("emoji");
         if (input) input.value = emoji;
         patchPreview();
-        document.getElementById("emojiMeta")?.replaceChildren(document.createTextNode("Selected avatar"));
-        picker.querySelectorAll(".emoji-opt").forEach(x => x.classList.toggle("selected", x === b));
+        document.getElementById("emojiMeta")?.replaceChildren(
+          document.createTextNode(`Selected ${slug}`)
+        );
+        picker.querySelectorAll(".emoji-opt").forEach(x =>
+          x.classList.toggle("selected", x === b)
+        );
+
         const overlay = document.getElementById("emojiOverlay");
         overlay?.classList.remove("open");
         overlay?.setAttribute("aria-hidden","true");
         document.body.classList.remove("emoji-open");
       });
+
       picker.appendChild(b);
     }
+
     const current = document.getElementById("emoji")?.value || "😎";
-    picker.querySelectorAll(".emoji-opt").forEach(b => b.classList.toggle("selected", b.dataset.emoji === current));
+    picker.querySelectorAll(".emoji-opt").forEach(b =>
+      b.classList.toggle("selected", b.dataset.emoji === current)
+    );
     patchPreview();
   }
 
@@ -85,10 +123,31 @@
     ).forEach(el => {
       const emoji = el.textContent.trim();
       if (!AVATAR_MAP[emoji] || el.classList.contains("player-avatar-emoji")) return;
+
       el.className = "player-avatar-emoji";
       el.dataset.emoji = emoji;
       el.textContent = "";
       el.appendChild(avatarArt(emoji, "mini-avatar"));
+    });
+  }
+
+  function patchMascot() {
+    document.querySelectorAll("img[src*='fox-mascot.svg']").forEach(img => {
+      if (img.src.endsWith(MASCOT_SRC)) return;
+      img.src = MASCOT_SRC;
+      img.removeAttribute("srcset");
+      img.alt = "Sequence+ fox mascot";
+      img.dataset.mascotAsset = "9-tail-fox";
+    });
+
+    document.querySelectorAll(".mascot, .fox-mascot, [data-mascot='fox']").forEach(container => {
+      if (container.querySelector("img[data-mascot-asset='9-tail-fox']")) return;
+      const img = document.createElement("img");
+      img.src = MASCOT_SRC;
+      img.alt = "Sequence+ fox mascot";
+      img.dataset.mascotAsset = "9-tail-fox";
+      img.className = "sequence-mascot-image";
+      container.replaceChildren(img);
     });
   }
 
@@ -104,6 +163,7 @@
       const game = document.getElementById("game");
       const room = document.getElementById("roomView");
       const lobby = document.getElementById("lobby");
+
       if (game && !game.classList.contains("hidden")) {
         room?.classList.add("hidden");
         lobby?.classList.add("hidden");
@@ -119,6 +179,7 @@
     for (const el of screens) {
       const hidden = el.classList.contains("hidden");
       el.setAttribute("aria-hidden", hidden ? "true" : "false");
+
       if (hidden) {
         el.style.setProperty("display","none","important");
         el.style.setProperty("visibility","hidden","important");
@@ -134,12 +195,15 @@
   }
 
   let scheduled = false;
+
   function refresh() {
     syncScreens();
     rebuildPicker();
     patchGeneratedPlayers();
     patchPreview();
+    patchMascot();
   }
+
   function scheduleRefresh() {
     if (scheduled) return;
     scheduled = true;
@@ -150,15 +214,17 @@
   }
 
   function boot() {
-    document.documentElement.classList.add("sequence-premium-v3");
+    document.documentElement.classList.add("sequence-premium-v4");
     refresh();
+
     const observer = new MutationObserver(() => scheduleRefresh());
     observer.observe(document.body, {
       subtree:true,
       childList:true,
       attributes:true,
-      attributeFilter:["class"]
+      attributeFilter:["class","src","srcset"]
     });
+
     window.addEventListener("pageshow",scheduleRefresh,{passive:true});
     window.addEventListener("resize",scheduleRefresh,{passive:true});
   }
