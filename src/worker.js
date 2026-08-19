@@ -31,7 +31,7 @@ async webSocketMessage(ws,message){let data;try{data=JSON.parse(message)}catch{r
 if(data.type==="set_timer"){if(pid!==state.hostId||state.status!=="lobby")return;const seconds=clampTimer(data.seconds);state.players.forEach(p=>p.timerSeconds=seconds);await this.save(state);return this.broadcastState()}
 if(data.type==="start"){if(pid!==state.hostId||state.players.length<2||state.status!=="lobby")return;const randomized=randomizeTeams(state.players);state.players=randomized.players;state.teams=randomized.teams;Object.assign(state,createGame(state.players));await this.save(state);await this.ensureAlarm();return this.broadcastState()}
 if(data.type==="pause"){if(pid!==state.hostId||state.status!=="playing")return;state.paused=!state.paused;state.lastTickAt=Date.now();if(state.paused)await this.ctx.storage.deleteAlarm();else await this.scheduleTimer();await this.save(state);return this.broadcastState()}
-if(data.type==="end_turn"){if(pid!==state.hostId||state.status!=="playing"||state.paused)return this.finishOrAutoFinish(state,"host")}
+if(data.type==="end_turn"){if(pid!==state.hostId||state.status!=="playing"||state.paused)return;return this.finishOrAutoFinish(state,"host")}
 if(data.type==="finish_turn"){if(state.status!=="playing"||state.paused||state.current!==i)return;return this.finishStagedTurn(state,i)}
 if(data.type==="undo_move"){if(state.status!=="playing"||state.paused||state.current!==i)return;return this.undoMove(state,i)}
 if(data.type==="tick")return;
