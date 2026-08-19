@@ -1,0 +1,1 @@
+I will wire the exact user-supplied avatar artwork into the UI; no substitute emoji set should be used.
