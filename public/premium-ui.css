@@ -6,27 +6,32 @@ html,body{background:#06142e url('/assets/sequence-fantasy-background.svg') cent
 
 #lobby,#roomView,#game{isolation:auto!important;contain:none!important;backface-visibility:visible!important;-webkit-backface-visibility:visible!important;transform:none!important;transition:none!important;animation:none!important}.app>*{backface-visibility:visible!important;-webkit-backface-visibility:visible!important}.page{contain:none!important;backface-visibility:visible!important;-webkit-backface-visibility:visible!important}.hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
-/* Media-backed avatar and mascot artwork */
 .avatar-art{display:inline-flex!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;border-radius:0!important;overflow:hidden!important;align-items:center!important;justify-content:center!important;pointer-events:none}.avatar-art img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;user-select:none!important;-webkit-user-drag:none!important}.avatar-art.avatar-fallback{align-items:center!important;justify-content:center!important;font-size:clamp(18px,5vw,30px)!important}.emoji-trigger .preview{padding:2px!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}.emoji-trigger .preview .avatar-art{width:100%!important;height:100%!important}.emoji-opt{padding:3px!important;display:flex!important;align-items:center!important;justify-content:center!important}.emoji-opt .picker-avatar{width:100%!important;height:100%!important}.player-avatar-emoji{display:inline-flex!important;width:28px!important;height:28px!important;margin-right:5px!important;vertical-align:middle!important;overflow:hidden!important;border-radius:8px!important;flex:none!important;background:#fff!important}.player-avatar-emoji .mini-avatar{width:28px!important;height:28px!important}.player-chip .player-avatar-emoji{width:26px!important;height:26px!important}.player-chip .player-avatar-emoji .mini-avatar{width:26px!important;height:26px!important}.sequence-mascot-image,img[data-mascot-asset="9-tail-fox"]{display:block;width:100%;max-width:260px;height:auto;max-height:320px;object-fit:contain;object-position:center;margin-inline:auto}body{overflow-x:hidden!important}
 
-
-/* Final desktop viewport fit */
+/* Final desktop layout: keep the complete board and the action controls visible together. */
 @media(min-width:760px){
   html,body{height:100dvh!important;max-height:100dvh!important;overflow:hidden!important}
   .app{height:100dvh!important;max-height:100dvh!important}
   .page{height:calc(100dvh - 64px)!important;max-height:calc(100dvh - 64px)!important;overflow:hidden!important;padding:5px 8px!important}
-  .game{height:100%!important;max-height:100%!important;grid-template-rows:26px 45px 26px minmax(0,1fr) 118px!important;row-gap:3px!important}
+  .game{height:100%!important;max-height:100%!important;grid-template-rows:26px 45px 26px minmax(0,1fr) 134px!important;row-gap:3px!important}
   .game .turnrow{height:45px!important}
   .game .stats{height:26px!important}
   .game .board-wrap{min-height:0!important;height:100%!important;overflow:hidden!important;padding:4px!important}
-  .game .board{width:min(100%,calc(100dvh - 330px))!important;height:auto!important;max-width:100%!important;max-height:100%!important;aspect-ratio:1/1!important}
-  .game .hand{height:118px!important;max-height:118px!important;overflow:visible!important}
-  .game .cards{height:72px!important;min-height:72px!important}
+  .game .board{width:min(100%,calc(100dvh - 346px))!important;height:auto!important;max-width:100%!important;max-height:100%!important;aspect-ratio:1/1!important}
+  .game .hand{height:134px!important;max-height:134px!important;overflow:visible!important;padding-top:7px!important;padding-bottom:5px!important}
+  .game .hand-head{height:17px!important;min-height:17px!important;flex-basis:17px!important}
+  .game .cards{height:76px!important;min-height:76px!important;padding-top:1px!important;padding-bottom:0!important}
+  .game .actionbar{height:34px!important;min-height:34px!important;display:grid!important;position:relative!important;z-index:100!important}
+  .game .actionbar button{height:34px!important;min-height:34px!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:101!important}
+  .game .finish,.game .undo,.game .hint{display:flex!important;visibility:visible!important;opacity:1!important}
 }
 
-/* Completed sequences are permanently protected. */
-.token.sequence-locked{background:radial-gradient(circle at 35% 28%,#fff6b0 0,#f0c84d 22%,#b77b16 62%,#6d410b 100%)!important;border:3px solid #fff2a8!important;box-shadow:0 0 0 2px #7a4d10,0 0 14px #f5d35d,0 4px 10px #0008!important;color:#fff!important;animation:sequenceLockPulse .9s ease-out}
-.token.sequence-locked::after{content:"🔒";font-size:clamp(8px,1.4vw,12px);filter:drop-shadow(0 1px 1px #5a3700);}
+/* Completed sequences stay visibly BLUE, GREEN, or RED while gaining a gold protective edge. */
+.token.sequence-locked{border:3px solid #f8df78!important;box-shadow:0 0 0 2px rgba(78,48,8,.85),0 0 11px rgba(245,211,93,.72),0 4px 10px rgba(0,0,0,.55)!important;color:#fff!important;animation:sequenceLockPulse .9s ease-out}
+.token.blue.sequence-locked{background:radial-gradient(circle at 35% 28%,#a9ceff 0,#4c8cff 28%,#2f6ad9 68%,#183f8e 100%)!important}
+.token.green.sequence-locked{background:radial-gradient(circle at 35% 28%,#9af0c8 0,#43c98a 28%,#1e9c64 68%,#0d5d3a 100%)!important}
+.token.red.sequence-locked{background:radial-gradient(circle at 35% 28%,#ffb0b8 0,#f15a6b 28%,#db3449 68%,#8f1d2e 100%)!important}
+.token.sequence-locked::after{content:"🔒";font-size:clamp(8px,1.4vw,12px);filter:drop-shadow(0 1px 1px #3b2800)}
 @keyframes sequenceLockPulse{0%{transform:scale(.72) rotate(-8deg);filter:brightness(1.5)}65%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
-.sequence-locked-cell{box-shadow:inset 0 0 0 2px #e5b83f,0 0 10px #e5b83f55!important}
+.sequence-locked-cell{box-shadow:inset 0 0 0 2px #e5b83f,0 0 10px rgba(229,179,63,.42)!important}
 .sequence-locked-cell .face{opacity:.62}
