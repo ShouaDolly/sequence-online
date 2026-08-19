@@ -1,4 +1,7 @@
 (()=>{
+  if(window.__sequencePremiumUILoaded)return;
+  window.__sequencePremiumUILoaded=true;
+
   const avatars={
     '😎':{id:'a01',name:'Royal Cat'},
     '🦊':{id:'a02',name:'Royal Fox'},
@@ -24,8 +27,6 @@
   const avatarSvg=(id)=>`<svg class="avatar-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="/assets/sequence-avatars.svg#${id}"></use></svg>`;
   const getAvatar=value=>avatars[value]||avatars['😎'];
 
-  // Explicitly synchronize the three full-page screens. This prevents a
-  // browser compositor from retaining a painted layer from the previous screen.
   function syncScreens(){
     const screens=[document.getElementById('lobby'),document.getElementById('roomView'),document.getElementById('game')].filter(Boolean);
     for(const el of screens){
