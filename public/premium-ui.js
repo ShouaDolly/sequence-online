@@ -1,18 +1,10 @@
 (()=> {
   if (window.__sequencePremiumUIv4Loaded) return;
   window.__sequencePremiumUIv4Loaded = true;
-  const AVATARS = [
-    ["😎",18,"turtle","turtle.png"],["🦊",1,"9-tail fox","9-tail-fox.png"],["🐼",2,"panda","panda.png"],["🐱",0,"royal cat","cat-royal.png"],["🐯",4,"tiger","tiger.png"],["🦄",5,"unicorn","unicorn.png"],["🐸",6,"frog","frog.png"],["🐰",3,"rabbit","rabbit.png"],["🐻",7,"bear",""],["🐙",8,"octopus","octopus.png"],["🦋",9,"butterfly","butterfly.png"],["🌸",10,"blossom girl","blossom-girl.png"],["🌙",11,"moon","moon.png"],["⭐",12,"star","star.png"],["🔥",13,"fire",""],["👻",14,"ghost","ghost.png"],["💎",15,"diamond",""],["🍀",16,"clover","clover.png"],["⚡",17,"wolf","wolf.png"],["🐲",19,"dragon",""]
-  ];
-  const AVATAR_MAP=Object.fromEntries(AVATARS.map(([emoji,index,slug,file])=>[emoji,{index,slug,file}]));
-  window.SEQUENCE_AVATAR_MAP=AVATAR_MAP;
+  const AVATARS = [["😎",18,"turtle","turtle.png"],["🦊",1,"9-tail fox","9-tail-fox.png"],["🐼",2,"panda","panda.png"],["🐱",0,"royal cat","cat-royal.png"],["🐯",4,"tiger","tiger.png"],["🦄",5,"unicorn","unicorn.png"],["🐸",6,"frog","frog.png"],["🐰",3,"rabbit","rabbit.png"],["🐻",7,"bear",""],["🐙",8,"octopus","octopus.png"],["🦋",9,"butterfly","butterfly.png"],["🌸",10,"blossom girl","blossom-girl.png"],["🌙",11,"moon","moon.png"],["⭐",12,"star","star.png"],["🔥",13,"fire",""],["👻",14,"ghost","ghost.png"],["💎",15,"diamond",""],["🍀",16,"clover","clover.png"],["⚡",17,"wolf","wolf.png"],["🐲",19,"dragon",""]];
+  const AVATAR_MAP=Object.fromEntries(AVATARS.map(([emoji,index,slug,file])=>[emoji,{index,slug,file}]));window.SEQUENCE_AVATAR_MAP=AVATAR_MAP;
   const EMOJI_ASSET_BASE="/media/emojis/",MASCOT_SRC=`${EMOJI_ASSET_BASE}9-tail-fox.png`;
-  function avatarArt(emoji,extraClass=""){
-    const meta=AVATAR_MAP[emoji]||AVATAR_MAP["😎"],el=document.createElement("span");
-    el.className=`avatar-art ${extraClass}`.trim();el.dataset.emoji=emoji;el.dataset.avatarIndex=String(meta.index);el.title=meta.slug;
-    if(meta.file){const img=document.createElement("img");img.src=`${EMOJI_ASSET_BASE}${meta.file}`;img.alt=meta.slug;img.loading="lazy";img.draggable=false;el.appendChild(img)}else{el.textContent=emoji;el.classList.add("avatar-fallback")}
-    return el;
-  }
+  function avatarArt(emoji,extraClass=""){const meta=AVATAR_MAP[emoji]||AVATAR_MAP["😎"],el=document.createElement("span");el.className=`avatar-art ${extraClass}`.trim();el.dataset.emoji=emoji;el.dataset.avatarIndex=String(meta.index);el.title=meta.slug;if(meta.file){const img=document.createElement("img");img.src=`${EMOJI_ASSET_BASE}${meta.file}`;img.alt=meta.slug;img.loading="lazy";img.draggable=false;el.appendChild(img)}else{el.textContent=emoji;el.classList.add("avatar-fallback")}return el}
   function setAvatar(container,emoji){if(!container)return;container.textContent="";container.appendChild(avatarArt(emoji));container.dataset.avatarEmoji=emoji}
   function patchPreview(){setAvatar(document.getElementById("emojiPreview"),document.getElementById("emoji")?.value||"😎")}
   function rebuildPicker(){const picker=document.getElementById("emojiPicker");if(!picker)return;if(picker.dataset.avatarV4==="1"){patchPreview();return}picker.dataset.avatarV4="1";picker.innerHTML="";for(const[emoji,index,slug]of AVATARS){const b=document.createElement("button");b.type="button";b.className="emoji-opt";b.dataset.emoji=emoji;b.title=slug;b.setAttribute("aria-label",slug);b.appendChild(avatarArt(emoji,"picker-avatar"));b.addEventListener("click",()=>{const input=document.getElementById("emoji");if(input)input.value=emoji;patchPreview();document.getElementById("emojiMeta")?.replaceChildren(document.createTextNode(`Selected ${slug}`));picker.querySelectorAll(".emoji-opt").forEach(x=>x.classList.toggle("selected",x===b));const overlay=document.getElementById("emojiOverlay");overlay?.classList.remove("open");overlay?.setAttribute("aria-hidden","true");document.body.classList.remove("emoji-open")});picker.appendChild(b)}const current=document.getElementById("emoji")?.value||"😎";picker.querySelectorAll(".emoji-opt").forEach(b=>b.classList.toggle("selected",b.dataset.emoji===current));patchPreview()}
@@ -24,13 +16,15 @@
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 
-/* Mobile/tablet game recovery: the Durable Object keeps the game state, so reconnect the same player after Safari/Chrome suspends the tab. */
+/* Game persistence/recovery: the Durable Object keeps the authoritative game in the cloud. If mobile Safari/Chrome suspends or navigates away from the tab, save the join identity and reload/rejoin instead of leaving the player stranded on a dead WebSocket. */
 (()=>{
   if(window.__sequenceRecoveryLoaded)return;window.__sequenceRecoveryLoaded=true;
-  const KEY='sequence_recovery_v1';let reconnecting=false,lastAttempt=0;
+  const KEY='sequence_recovery_v2';let hiddenAt=0;
+  const gameVisible=()=>{const g=document.getElementById('game');return !!g&&!g.classList.contains('hidden')};
   const save=()=>{try{const name=document.getElementById('name')?.value?.trim();const room=(new URLSearchParams(location.search).get('room')||document.getElementById('roomInput')?.value||'').toUpperCase();const emoji=document.getElementById('emoji')?.value||'😎';const spec=!!document.getElementById('spectator')?.checked;if(name&&room)localStorage.setItem(KEY,JSON.stringify({name,room,emoji,spec,savedAt:Date.now()}))}catch{}};
-  const recover=()=>{if(reconnecting||Date.now()-lastAttempt<2500)return;const game=document.getElementById('game');if(!game||game.classList.contains('hidden'))return;if(window.ws&&window.ws.readyState===1)return;let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch{};const room=(new URLSearchParams(location.search).get('room')||saved?.room||'').toUpperCase(),name=saved?.name||document.getElementById('name')?.value?.trim();if(!room||!name||typeof window.join!=='function')return;reconnecting=true;lastAttempt=Date.now();if(document.getElementById('name'))document.getElementById('name').value=name;if(document.getElementById('roomInput'))document.getElementById('roomInput').value=room;if(document.getElementById('emoji'))document.getElementById('emoji').value=saved?.emoji||'😎';if(document.getElementById('spectator'))document.getElementById('spectator').checked=!!saved?.spec;try{window.join()}catch{}setTimeout(()=>{reconnecting=false},1800)};
-  document.addEventListener('click',e=>{if(e.target.closest?.('#join'))setTimeout(save,100);},true);
-  document.addEventListener('input',e=>{if(['name','roomInput','emoji'].includes(e.target?.id))save()},true);
-  window.addEventListener('pagehide',save,{passive:true});window.addEventListener('beforeunload',save,{passive:true});window.addEventListener('online',()=>setTimeout(recover,500),{passive:true});window.addEventListener('pageshow',()=>setTimeout(recover,700),{passive:true});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save();else setTimeout(recover,500)},{passive:true});setInterval(recover,5000);
+  const prepare=()=>{if(!gameVisible())return;save();try{sessionStorage.setItem('sequence_recover_pending','1')}catch{}};
+  const reconnectAfterReload=()=>{let pending=false;try{pending=sessionStorage.getItem('sequence_recover_pending')==='1';if(pending)sessionStorage.removeItem('sequence_recover_pending')}catch{}if(!pending)return;let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch{};if(!saved?.name||!saved?.room||typeof window.join!=='function')return;const run=()=>{const n=document.getElementById('name'),r=document.getElementById('roomInput'),e=document.getElementById('emoji'),s=document.getElementById('spectator');if(n)n.value=saved.name;if(r)r.value=saved.room;if(e)e.value=saved.emoji||'😎';if(s)s.checked=!!saved.spec;try{window.join()}catch{}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(run,250),{once:true});else setTimeout(run,250)};
+  document.addEventListener('click',e=>{if(e.target.closest?.('#join'))setTimeout(save,100)},true);document.addEventListener('input',e=>{if(['name','roomInput','emoji'].includes(e.target?.id))save()},true);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){hiddenAt=Date.now();prepare()}else if(hiddenAt&&Date.now()-hiddenAt>=8000&&gameVisible()){try{sessionStorage.setItem('sequence_recover_pending','1')}catch{};location.reload()}hiddenAt=0},{passive:true});
+  window.addEventListener('pagehide',prepare,{passive:true});window.addEventListener('beforeunload',prepare,{passive:true});window.addEventListener('pageshow',reconnectAfterReload,{passive:true});reconnectAfterReload();
 })();
