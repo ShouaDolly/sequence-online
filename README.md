@@ -1,49 +1,41 @@
-# Sequence Online
+# QuinLume
 
-A real-time, mobile-first, portrait multiplayer Sequence-style card/board game using Cloudflare Workers, Durable Objects, and WebSockets.
+**Light up five.** QuinLume is a real-time, mobile-first card-and-token line game built for private browser rooms with Cloudflare Workers, Durable Objects, and WebSockets.
 
 ## Current game design
-- 2–12 players.
-- Players enter a name and join a room by link.
-- Spectator mode: people can join an active room without receiving a private hand or being able to play.
-- Host chooses one turn timer for everyone before the game starts: 10, 20, 30, 45, 60, 90, or 120 seconds.
-- Teams are randomized when the host starts the game.
+- 2–12 players can enter a private room by link.
+- Players choose a name and custom fantasy avatar.
+- Spectators can watch an active room without receiving a private hand or making moves.
+- The host chooses a shared turn timer: 10, 20, 30, 45, 60, 90, or 120 seconds.
+- Teams and team colors are randomized when the host starts the match.
 - Team token colors are blue, green, and red as applicable to player count.
-- Every team needs 2 sequences to win.
-- The board is portrait-oriented and uses a pale/white tabletop appearance.
-- Players select a card from their private hand, then select a legal matching board space.
+- A team completes two protected five-token lines to win.
+- Players select a card from their private hand, then choose a legal matching board space.
 - A played card is discarded and a replacement is drawn automatically.
 - Two-eyed Jacks make wild token placements.
-- One-eyed Jacks remove an opponent token when that token is not protected by a completed sequence.
-- Corners are automatically wild.
+- One-eyed Jacks remove an opponent token unless that token belongs to a protected completed line.
+- The four corners are automatic wild spaces.
 
-## Timer / auto-finish
-The timer is **not** a punishment that simply skips a turn.
+## Timer and auto-finish
+The timer does not simply skip a turn. When time expires, the server uses the current player's actual hand and completes a legal move automatically.
 
-When a player's timer expires, the server takes over that player's actual hand and automatically finishes the turn strategically:
-1. Prefer an immediate winning sequence.
-2. Look for a strong defensive/blocking removal with a one-eyed Jack.
-3. Use a two-eyed Jack offensively when useful.
-4. Choose a strong legal normal-card placement.
-5. Replace the played card from the draw pile and finish the turn.
-
-The host also has **Auto-Finish Turn**, which invokes the same server-side strategic logic immediately. This is useful when a player walks away or loses connection.
+The host also has **Auto-Finish Turn**, which invokes the same server-side logic immediately when a player walks away or loses connection.
 
 ## Host controls
 - Start game
-- Pause / resume game
-- Set the shared timer before starting
-- Auto-finish the current player's turn
-- Reset for a rematch
+- Pause or resume
+- Set the shared timer
+- Auto-finish the current turn
+- Reset the room for a rematch
 
 ## Room links
-The room share control copies the **entire URL**, not just the room code, so friends can tap the link and join directly.
+The share control copies the full room URL so friends can tap the link and join directly.
 
 ## Deploy
-1. Create a free Cloudflare account.
+1. Create a Cloudflare account.
 2. Install Node.js.
 3. Run `npm install`.
 4. Run `npm run dev` locally.
-5. Run `npm run deploy` to deploy the Worker and its public assets.
+5. Run `npm run deploy` to deploy the Worker and public assets.
 
 The Worker uses a SQLite-backed Durable Object called `GameRoom` and WebSocket connections for live state synchronization.
