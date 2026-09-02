@@ -1,9 +1,9 @@
 {
-  "name": "Sequence-Style Online",
-  "short_name": "Sequence",
+  "name": "QuinLume",
+  "short_name": "QuinLume",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b2f22",
-  "theme_color": "#0b2f22",
-  "description": "Six-player real-time card-and-chip game."
+  "background_color": "#071326",
+  "theme_color": "#071326",
+  "description": "A magical real-time card-and-token line game. Light up five to win."
 }
