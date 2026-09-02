@@ -1,6 +1,8 @@
-# QuinLume
+# Hush Five
 
-**Light up five.** QuinLume is a real-time, mobile-first card-and-token line game built for private browser rooms with Cloudflare Workers, Durable Objects, and WebSockets.
+**Keep quiet. Make five.** Hush Five is a real-time, mobile-first card-and-token line game built for private browser rooms with Cloudflare Workers, Durable Objects, and WebSockets.
+
+The name comes from the table rule: teammates must read the board without signaling, whispering, or giving away a move.
 
 ## Current game design
 - 2–12 players can enter a private room by link.
@@ -9,7 +11,7 @@
 - The host chooses a shared turn timer: 10, 20, 30, 45, 60, 90, or 120 seconds.
 - Teams and team colors are randomized when the host starts the match.
 - Team token colors are blue, green, and red as applicable to player count.
-- A team completes two protected five-token lines to win.
+- A team claims two protected five-token lines to win.
 - Players select a card from their private hand, then choose a legal matching board space.
 - A played card is discarded and a replacement is drawn automatically.
 - Two-eyed Jacks make wild token placements.
