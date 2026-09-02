@@ -29,7 +29,25 @@
 (()=>{
   let restartButton=null;
   function gameFinished(){const win=document.getElementById('win');if(!win)return false;const text=(win.textContent||'').trim();const game=document.getElementById('game');const gameIsOpen=game&&!game.classList.contains('hidden');return gameIsOpen&&text.length>0;}
-  function ensureButton(){const win=document.getElementById('win');if(!win)return;if(!restartButton){restartButton=document.createElement('button');restartButton.type='button';restartButton.id='newGameBtn';restartButton.textContent='🔄 New Game';restartButton.style.cssText='display:none;margin:12px auto 0;padding:11px 18px;border:2px solid #efc55d;border-radius:16px;background:linear-gradient(135deg,#ffeaa7,#f4c44c 55%,#d99a1f);color:#3f2d08;font-weight:1000;box-shadow:0 8px 18px #0004;cursor:pointer;position:relative;z-index:50';restartButton.onclick=restart;win.appendChild(restartButton)}restartButton.style.display=gameFinished()?'block':'none'}
+  function ensureButton(){const win=document.getElementById('win');if(!win)return;if(!restartButton||!restartButton.isConnected){restartButton=document.createElement('button');restartButton.type='button';restartButton.id='newGameBtn';restartButton.textContent='🔄 New Game';restartButton.style.cssText='display:none;margin:12px auto 0;padding:11px 18px;border:2px solid #efc55d;border-radius:16px;background:linear-gradient(135deg,#ffeaa7,#f4c44c 55%,#d99a1f);color:#3f2d08;font-weight:1000;box-shadow:0 8px 18px #0004;cursor:pointer;position:relative;z-index:50';restartButton.onclick=restart;win.appendChild(restartButton)}restartButton.style.display=gameFinished()?'block':'none'}
   function restart(){const room=(new URLSearchParams(location.search).get('room')||document.getElementById('roomInput')?.value||'').toUpperCase(),name=document.getElementById('name')?.value?.trim(),emoji=document.getElementById('emoji')?.value||'😎',pid=localStorage.getItem('sequence_player_id');if(!room||!name||!pid){alert('Please refresh and rejoin the room.');return}restartButton.disabled=true;restartButton.textContent='🔄 Starting new game…';const proto=location.protocol==='https:'?'wss':'ws',w=new WebSocket(`${proto}://${location.host}/ws/${room}?name=${encodeURIComponent(name)}&pid=${encodeURIComponent(pid)}&emoji=${encodeURIComponent(emoji)}`);let completed=false;w.onopen=()=>w.send(JSON.stringify({type:'reset'}));w.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.type==='state'&&m.status==='lobby'){completed=true;w.close();location.reload()}}catch{}};const fail=()=>{if(completed)return;restartButton.disabled=false;restartButton.textContent='🔄 New Game';try{w.close()}catch{};alert('Only the host can start a new game.')};w.onerror=fail;setTimeout(fail,2500)}
   const observer=new MutationObserver(()=>ensureButton());function boot(){ensureButton();observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class']});setInterval(ensureButton,500)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+
+/* QuinLume brand layer. Keeps game logic untouched while removing the old public-facing name. */
+(()=>{
+  const BRAND='QuinLume';
+  let applying=false;
+  function replaceWinnerLanguage(){const win=document.getElementById('win');if(!win)return;for(const node of win.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const next=(node.nodeValue||'').replace(/completed two sequences!/gi,'lit two lines!').replace(/completed two sequences/gi,'lit two lines');if(next!==node.nodeValue)node.nodeValue=next}}
+  function applyBrand(){if(applying)return;applying=true;try{
+    if(document.title!==BRAND)document.title=BRAND;
+    document.querySelectorAll('.logo').forEach(el=>{const wanted='Quin<span>Lume</span><small>light up five</small>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
+    document.querySelectorAll('.hero').forEach(el=>{const wanted='Play <span>QuinLume</span>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
+    document.querySelectorAll('.crown b').forEach(el=>{if(el.textContent!==BRAND)el.textContent=BRAND});
+    const lineStat=document.querySelector('.stats .stat:first-child');if(lineStat&&lineStat.dataset.quinlume!=='1'){lineStat.innerHTML='<b>🏆 2</b>Lines';lineStat.dataset.quinlume='1'}
+    document.querySelectorAll('img[alt*="Sequence"],img[alt*="sequence"]').forEach(img=>img.alt='QuinLume fox mascot');
+    replaceWinnerLanguage();
+  }finally{applying=false}}
+  function boot(){applyBrand();let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;applyBrand()})}).observe(document.body,{subtree:true,childList:true,characterData:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
