@@ -1,9 +1,9 @@
 {
-  "name": "QuinLume",
-  "short_name": "QuinLume",
+  "name": "Hush Five",
+  "short_name": "Hush Five",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#071326",
   "theme_color": "#071326",
-  "description": "A magical real-time card-and-token line game. Light up five to win."
+  "description": "A real-time card-and-token line game. Keep quiet. Make five."
 }
