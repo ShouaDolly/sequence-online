@@ -35,18 +35,18 @@
   const observer=new MutationObserver(()=>ensureButton());function boot(){ensureButton();observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class']});setInterval(ensureButton,500)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 
-/* QuinLume brand layer. Keeps game logic untouched while removing the old public-facing name. */
+/* Hush Five brand layer. Keeps game logic and deployment identifiers untouched. */
 (()=>{
-  const BRAND='QuinLume';
+  const BRAND='Hush Five';
   let applying=false;
-  function replaceWinnerLanguage(){const win=document.getElementById('win');if(!win)return;for(const node of win.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const next=(node.nodeValue||'').replace(/completed two sequences!/gi,'lit two lines!').replace(/completed two sequences/gi,'lit two lines');if(next!==node.nodeValue)node.nodeValue=next}}
+  function replaceWinnerLanguage(){const win=document.getElementById('win');if(!win)return;for(const node of win.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const next=(node.nodeValue||'').replace(/completed two sequences!/gi,'claimed two lines!').replace(/completed two sequences/gi,'claimed two lines');if(next!==node.nodeValue)node.nodeValue=next}}
   function applyBrand(){if(applying)return;applying=true;try{
     if(document.title!==BRAND)document.title=BRAND;
-    document.querySelectorAll('.logo').forEach(el=>{const wanted='Quin<span>Lume</span><small>light up five</small>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
-    document.querySelectorAll('.hero').forEach(el=>{const wanted='Play <span>QuinLume</span>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
+    document.querySelectorAll('.logo').forEach(el=>{const wanted='Hush<span>Five</span><small>keep quiet. make five.</small>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
+    document.querySelectorAll('.hero').forEach(el=>{const wanted='Play <span>Hush Five</span>';if(el.innerHTML!==wanted)el.innerHTML=wanted});
     document.querySelectorAll('.crown b').forEach(el=>{if(el.textContent!==BRAND)el.textContent=BRAND});
-    const lineStat=document.querySelector('.stats .stat:first-child');if(lineStat&&lineStat.dataset.quinlume!=='1'){lineStat.innerHTML='<b>🏆 2</b>Lines';lineStat.dataset.quinlume='1'}
-    document.querySelectorAll('img[alt*="Sequence"],img[alt*="sequence"]').forEach(img=>img.alt='QuinLume fox mascot');
+    const lineStat=document.querySelector('.stats .stat:first-child');if(lineStat&&lineStat.dataset.hushFive!=='1'){lineStat.innerHTML='<b>🏆 2</b>Lines';lineStat.dataset.hushFive='1'}
+    document.querySelectorAll('img[alt*="Sequence"],img[alt*="sequence"],img[alt*="QuinLume"]').forEach(img=>img.alt='Hush Five fox mascot');
     replaceWinnerLanguage();
   }finally{applying=false}}
   function boot(){applyBrand();let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;applyBrand()})}).observe(document.body,{subtree:true,childList:true,characterData:true})}
